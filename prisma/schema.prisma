@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id    Int     @id @default(autoincrement())
+  cpf   String? @unique @db.VarChar(14)
+  name  String? @db.VarChar(255)
+  email String? @db.VarChar(255)
+
+  orders Order[]
+
+  @@map("tb_clients")
+}
+
+model Item {
+  id          Int         @id @default(autoincrement())
+  name        String?     @db.VarChar(255)
+  type        String?     @db.VarChar(255)
+  price       Decimal?    @db.Decimal(19, 4)
+  quantity    Float?
+  description String?     @db.VarChar(255)
+  images      String?     @db.VarChar(1000)
+  toOrders    OrderItem[]
+
+  @@map("tb_items")
+}
+
+model OrderItem {
+  id       Int      @id @default(autoincrement())
+  order_id BigInt?
+  item_id  BigInt?
+  quantity Float?
+  note     String?  @db.VarChar(255)
+  done     Boolean?
+  orderId  Int?
+  itemId   Int?
+  item     Item?    @relation(fields: [itemId], references: [id])
+  order    Order?   @relation(fields: [orderId], references: [id])
+
+  @@map("tb_order_items")
+}
+
+model Order {
+  id           Int         @id @default(autoincrement())
+  requester_id BigInt?
+  requested_at DateTime?   @db.Timestamp(6)
+  updated_at   DateTime?   @db.Timestamp(6)
+  amount       Decimal?    @db.Decimal(19, 4)
+  status       String?     @db.VarChar(255)
+  payment_id   String?     @db.VarChar(255)
+  client_id    Int?
+  client       Client?     @relation(fields: [client_id], references: [id])
+  to_items     OrderItem[]
+  Payment      Payment?    @relation(fields: [payment_id], references: [id])
+
+  @@map("tb_orders")
+}
+
+model PaymentDetail {
+  id         Int      @id @default(autoincrement())
+  payment_id String?  @unique @db.VarChar(255)
+  key        String?  @db.VarChar(255)
+  value      String?  @db.VarChar(255)
+  payment    Payment? @relation(fields: [payment_id], references: [id])
+
+  @@map("tb_payment_details")
+}
+
+model Payment {
+  id             String         @id @db.VarChar(255)
+  was_paid       Boolean
+  paid_at        DateTime?      @db.Timestamp(6)
+  method         String?        @db.VarChar(255)
+  orders         Order[]
+  payment_detail PaymentDetail?
+
+  @@map("tb_payments")
+}
+
+model User {
+  username String  @id @db.VarChar(255)
+  email    String? @unique @db.VarChar(255)
+  name     String? @db.VarChar(255)
+  password String? @db.VarChar(255)
+  role     String? @db.VarChar(255)
+
+  @@map("tb_users")
+}
